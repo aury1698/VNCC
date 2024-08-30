@@ -29,9 +29,4 @@ build_options:
       - harfbuzz-dev
       - fribidi-dev
 welcome_message: |
-  You have created a Python3 function using the Classic Watchdog.
-
-  To include third-party dependencies create a requirements.txt file.
-
-  For high-throughput applications, we recommend using the python3-flask
-  or python3-http templates.
+  You have created a iris training function using the Classic Watchdog.
