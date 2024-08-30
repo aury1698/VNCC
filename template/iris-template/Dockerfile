@@ -54,7 +54,7 @@ WORKDIR /home/app/
 COPY index.py .
 COPY requirements.txt .
 COPY model.pkl .
-COPY handler.py .
+#COPY handler.py .
 
 # Step 7: Set environment variables for Python paths
 ENV PATH=$PATH:/home/app/.local/bin:/home/app/python/bin/
@@ -64,7 +64,7 @@ ENV PYTHONPATH=$PYTHONPATH:/home/app/python:/home/app/function
 RUN python3 -m venv test
 RUN test/bin/pip3 install --no-cache-dir -r requirements.txt
 #RUN pip3 install --user -r requirements.txt
-RUN . test/bin/activate
+#RUN . test/bin/activate
 
 # Step 9: Set up the function directory
 RUN mkdir -p function
@@ -74,10 +74,11 @@ COPY function/requirements.txt .
 #RUN test/bin/pip3 install --user -r requirements.txt
 RUN ../test/bin/pip3 install --no-cache-dir -r requirements.txt
 #RUN pip3 install --user -r requirements.txt
-COPY function function
 
 WORKDIR /home/app/
-RUN ls
+USER root
+COPY function function
+USER appuser
 
 # Step 10: Set the fprocess environment variable and expose the port
 ENV fprocess="test/bin/python3 /home/app/index.py"
