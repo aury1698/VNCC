@@ -53,7 +53,6 @@ USER appuser
 WORKDIR /home/app/
 COPY index.py .
 COPY requirements.txt .
-COPY model.pkl .
 #COPY handler.py .
 
 # Step 7: Set environment variables for Python paths
