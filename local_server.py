@@ -1,4 +1,5 @@
 # the server must listen for POST requests to store a model and GET requests to return a model
+# this probably wont work with the containerized applications
 import os
 import sys
 import pickle
@@ -26,5 +27,4 @@ def get_model():
         return str(e)
 
 if __name__ == '__main__':
-    port = int(sys.argv[1])
     app.run(host='0.0.0.0', port=6001)

@@ -11,6 +11,7 @@ def handle(req):
     model = LogisticRegression(max_iter=200)
     model.fit(X_train, y_train)
     model_bytes = pickle.dumps(model)
+    # cambiare localhost con pinata
     requests.post('http://localhost:6001/model', data=model_bytes)
     if result.status_code >= 200 and result.status_code < 300:
         # print("Modello salvato.")

@@ -19,6 +19,7 @@ def handle(req):
             result = "Predizione:" + str(prediction[0])
             return result
         elif type == 'custom':
+            # cambiare localhost con pinata
             model_bytes = requests.get('http://localhost:6001/model')
             custom = pickle.loads(model_bytes)
             # Convertiamo l'input in un array numpy (modifica questo in base al tuo modello)
