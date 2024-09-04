@@ -15,19 +15,19 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: iris-service
+  name: iris-server
 spec:
   selector:
     matchLabels:
-      app: iris-service
+      app: iris-server
   replicas: 1
   template:
     metadata:
       labels:
-        app: iris-service
+        app: iris-server
     spec:
       containers:
-      - name: iris-service
+      - name: iris-server
         image: nicolacucina/iris-server:latest
         imagePullPolicy: Always
         ports:
