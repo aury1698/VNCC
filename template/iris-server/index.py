@@ -10,6 +10,17 @@ app = Flask(__name__)
 with open('model.pkl' , 'rb') as f:
     model = pickle.load(f)
 
+user_list = [
+    {
+        'username': 'nicolacucina',
+        'password': 'password'
+    },
+    {
+        'username': 'auroratraversini',
+        'password': 'wordpass'
+    }
+]
+
 @app.route('/model', methods=['POST'])
 def store_model():
     try:
@@ -22,6 +33,17 @@ def store_model():
 def get_model():
     try:
         return pickle.dumps(model)
+    except Exception as e:
+        return str(e)
+
+@app.route('/user', methods=['POST'])
+def auth_user():
+    try:
+        data = request.get_json()
+        for user in user_list:
+            if data['username'] == user['username'] and data['password'] == user['password']:
+                return 'token'
+        return 'Username o password incorretti'
     except Exception as e:
         return str(e)
 
