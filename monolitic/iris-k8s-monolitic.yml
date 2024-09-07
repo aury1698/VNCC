@@ -1,0 +1,52 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: iris-monolitic-user-service
+spec:
+  selector:
+    app: iris-monolitic
+  ports:
+  - protocol: "TCP"
+    port: 7500
+    targetPort: 8080
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: iris-monolitic-admin-service
+spec:
+  selector:
+    app: iris-monolitic
+  ports:
+  - protocol: "TCP"
+    port: 7501
+    targetPort: 8081
+  type: ClusterIP
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: iris-monolitic
+spec:
+  selector:
+    matchLabels:
+      app: iris-monolitic
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: iris-monolitic
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8081"
+    spec:
+      containers:
+      - name: iris-monolitic
+        image: nicolacucina/iris-monolitic:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+        - containerPort: 8081

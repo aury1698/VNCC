@@ -14,12 +14,15 @@ user_list = [
     {
         'username': 'nicolacucina',
         'password': 'password'
-    },
-    {
-        'username': 'auroratraversini',
-        'password': 'wordpass'
     }
 ]
+
+@app.route('/default', methods=['GET'])
+def get_default():
+    try:
+        return pickle.dumps(model)
+    except Exception as e:
+        return str(e)
 
 @app.route('/model', methods=['POST'])
 def store_model():
@@ -43,7 +46,7 @@ def auth_user():
         for user in user_list:
             if data['username'] == user['username'] and data['password'] == user['password']:
                 return 'token'
-        return 'Username o password incorretti'
+        return 'Invalid input'
     except Exception as e:
         return str(e)
 
