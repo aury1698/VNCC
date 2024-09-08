@@ -1,192 +1,136 @@
-# HOW TO INSTALL PROMETHEUS AND GRAFANA
+# Setting up Prometheus on a Kubernetes cluster for monitoring the Kubernetes cluster.
 
-## Installare helm se non presente e verifica la versione
-`curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash`
+## Step 0: Getting the Prometheus Kubernetes Manifest Files
+All the configuration files that needed are hosted on Github. You can clone the repo using the following command.
+```sh
+git clone https://github.com/techiescamp/kubernetes-prometheus`
+```
 
-`helm version`
+## Step 1: Create a Namespace
+Create a dedicated Kubernetes namespace for all monitoring components. Without this, the Prometheus Kubernetes deployment objects will be installed in the default namespace.
 
-## Aggiungere il repository di Helm per Prometheus
-`helm repo add prometheus-community https://prometheus-community.github.io/helm-charts `
+Run the following command to create a new namespace called `monitoring`."
+```sh
+kubectl create namespace monitoring
+```
 
-`helm repo update`
+## Step 2: Create a ClusterRole for RBAC policy
+Prometheus uses Kubernetes APIs to read all the available metrics from nodes, pods, deployments, and so on. For this reason, you need to create an RBAC policy with read access to the required API groups and bind the policy to the monitoring namespace.
 
-## Installare Prometheus e creare namespace "monitoring"
-`helm install prometheus prometheus-community/prometheus --namespace monitoring --create-namespace`
-
-## Verifica stato del pod prima di accedere a Prometheus per vedere se tutte le componenti sono "Running"
-`kubectl get pods -n monitoring`
-
-## Dal comando precedente mi sono accorta dei problemi con le componenti Server e AlertManager, se a te già funzionassero per assurdo salta i passaggi da qua in poi e salta a "Accesso a Prometheus"
-
-## Controlla così i volumi persistenti:
-`kubectl get pvc -n monitoring`
-
-## Allora da qui i passaggi di questo tizio online che hanno funzionato: https://github.com/prometheus-community/helm-charts/issues/4040
-
-## Intallare con helm lo storage persistente OpenEBS e metterlo nel namespace "openebs"
-`helm repo add openebs https://openebs.github.io/openebs`
-
-`helm repo update`
-
-`helm install openebs --namespace openebs openebs/openebs --set engines.replicated.mayastor.enabled=false --create-namespace`
-
-## Salvare il pvc (persistent volume) in uno yml per il PROMETHEUS SERVER (da fare uguale poi per Alert)
-`kubectl get pvc prometheus-server -n monitoring -o yaml > prometheus-server-pvc.yaml`
-
-## Modifica del file YAML del PVC per aggiungere una riga per settare lo storage (va inserito allo stesso livello gerarchico di resources & di volumeMode, in mezzo a loro, quindi subito SOPRA di "volumeMode: Filesystem"):
-
-`storageClassName: openebs-hostpath`
-
-## Eliminare il PVC esistente (pare  necessario perché non si può semplicemente modificare il storageClassName di un pvc esistente)
-`kubectl delete pvc prometheus-server -n monitoring`
-
-## Applicazione del PVC modificato: questo creerà un nuovo pvc che utilizza lo storage class OpenEBS.
-`kubectl apply -f prometheus-server-pvc.yaml`
-
-## Controllare che sia andato a buon fine, dovrebbe apparire che ora il prometheus-SERVER è "Bound"/ Active
-`kubectl get pvc -n monitoring`
-
-## Ripetere i 5 step precedenti (da "Salvare il pvc in uno yml...") ma stavolta per ALERT-MANAGER, del tipo il primo step sarà:
-`kubectl get pvc storage-prometheus-alertmanager-0 -n monitoring -o yaml > storage-prometheus-alertmanager-pvc.yaml`
-
-## Accesso a Prometheus (se tutte le componenti sono running obv)
-`kubectl port-forward -n monitoring svc/prometheus-server 9090:80`
-
-## Installare Grafana per la visualizzazione (nello stesso namespace)
-`helm install grafana grafana/grafana --namespace monitoring`
-
-## Accedere a Grafana con le credenziali mostrate nel terminale dopo l'istallazione (user: admin)
-`kubectl port-forward -n monitoring svc/grafana 3000:80`
-
-## NON ANCORA PROVATO:
-Una volta dentro Grafana,  configurare un nuovo datasource per Prometheus (http://prometheus-server.monitoring.svc.cluster.local) e importare dashboard predefinite per Kubernetes disponibili nel marketplace di Grafana.
+Create a file named `clusterRole.yaml`: you can find it in `prometheus\clusterRole.yaml`.
 
 
-## DA QUI: 05/09/2024
+Then create the role using the following command:
+```sh
+kubectl create -f clusterRole.yaml
+```
 
-Guida utile su Prometheus: https://devopscube.com/setup-prometheus-monitoring-on-kubernetes/
+## Step 3: Create a Config Map To Externalize Prometheus Configurations
 
-- (Posto quanto fatto nei passi sopra per istallare Prometheus) 
-Basandomi su github copilot ma soprattutto sulla documentazione: https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus  nella sezione "Configuration":
+To facilitate easier management of Prometheus configurations and alert rules, you can use a Kubernetes ConfigMap. This approach allows you to update configurations without needing to rebuild the Prometheus image. 
 
-1. Nel nostro servizio iris-k9s-prova.yml ho aggiunto "`annotations: prometheus.io/scrape: "true" prometheus.io/port: "6002`" per dire a prometheus di raccogliere i dati dal pod.
-Cioè (con aggiunta del servizio iris-metrics-service"): 
+The ConfigMap will mount the necessary configuration files into the `/etc/prometheus` directory of the Prometheus container, enabling dynamic discovery of pods and services within the Kubernetes cluster.
 
+1. Create a file named `config-map.yaml` and populate it with the contents from this link: [config-map.yaml](https://raw.githubusercontent.com/bibinwilson/kubernetes-prometheus/master/config-map.yaml).
+
+2. Execute the following command to create the ConfigMap in Kubernetes:
+
+```sh
+kubectl create -f config-map.yaml
+```
+
+This command generates the configuration and alert rules needed for Prometheus to scrape metrics from your pods. The key scrape job, `kubernetes-pods`, allows Prometheus to discover metrics from pods annotated with `prometheus.io/scrape` and `prometheus.io/port`.
+
+## Step 4: Annotate Your Services and Deployment for Prometheus Scraping
+Since Prometheus expects to scrape metrics from specific sources, you need to add annotations to your service and deployment definitions. This informs Prometheus where to look for metrics within your pods.
+
+Update your `iris-k8s-monolitic.yml` file to include the following annotations under the pod template in your deployment configuration:
+
+```sh
 apiVersion: v1
 kind: Service
 metadata:
-  name: iris-service
+  name: iris-monolitic-user-service
 spec:
   selector:
-    app: iris
+    app: iris-monolitic
   ports:
   - protocol: "TCP"
-    port: 6000
+    port: 7500
     targetPort: 8080
-  type: LoadBalancer
+  type: ClusterIP
 
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: iris-metrics-service
+  name: iris-monolitic-admin-service
 spec:
   selector:
-    app: iris
+    app: iris-monolitic
   ports:
   - protocol: "TCP"
-    port: 6002  # Porta per le metriche
-    targetPort: 8081  # Porta del container dove il watchdog espone le metriche
-  type: LoadBalancer
+    port: 7501
+    targetPort: 8081
+  type: ClusterIP
 
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: iris
+  name: iris-monolitic
 spec:
   selector:
     matchLabels:
-      app: iris
-  replicas: 2
+      app: iris-monolitic
+  replicas: 1
   template:
     metadata:
       labels:
-        app: iris
+        app: iris-monolitic
       annotations:
-        prometheus.io/scrape: "true"  # Indica a Prometheus di raccogliere le metriche
-        prometheus.io/port: "6002"  # Porta da cui raccogliere le metriche
+        prometheus.io/scrape: "true" # Indicates that Prometheus should scrape metrics from this pod.
+        prometheus.io/port: "8081" # Specifies the port from which Prometheus should collect metrics.
     spec:
       containers:
-      - name: iris
-        image: nicolacucina/iris-prova:latest
+      - name: iris-monolitic
+        image: nicolacucina/iris-monolitic:latest
         imagePullPolicy: Always
         ports:
-        - containerPort: 8080  # Porta principale dell'applicazione
-        - containerPort: 8081  # Porta dove il watchdog espone le metriche
+        - containerPort: 8080
+        - containerPort: 8081
+```
+Your `prometheus.yml` file should already be configured to scrape metrics from the annotated pods. 
 
+Finally, apply your updated configuration:
+`kubectl apply -f iris-k8s-monolitic.yml`
 
-2. Allora si dovrebbe controllare che il file "prometheus.yml" sia configurato per raccogliere metriche dai pod annotati. 
-L' ho trovato dentro la famosa ConfigMap, con il comando "`kubectl get configmap prometheus-server -n monitoring -o yaml`" e ho visto che lo yml di prometheus sembra okay già di default, infatti al suo interno troviamo una sezione tipo: 
+## Step 5: Create a Prometheus Deployment
 
-global:
-  scrape_interval: 15s # Intervallo di raccolta delle metriche
+Create a file named `prometheus-deployment.yaml`: you can see its structure in `prometheus\prometheus-deployment.` of this project.
 
-scrape_configs:
-  - job_name: 'kubernetes-pods'
-    kubernetes_sd_configs:
-      - role: pod
-    relabel_configs:
-      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]  #Filtra i pod che hanno l'annotazione prometheus.io/scrape impostata su true.
+This configuration mounts the Prometheus ConfigMap as files inside /etc/prometheus, as explained in the previous section. It is important to note that this deployment does not use persistent storage volumes for Prometheus storage, as this is a basic setup.
 
-        action: keep
-        regex: true
-      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_port]  #Sostituisce l'indirizzo di destinazione con il valore dell'annotazione prometheus.io/port.
+ Then, create a deployment on monitoring namespace using the above file.
+`kubectl create  -f prometheus-deployment.yaml`
+You can check the created deployment using the following command:
+ `kubectl get deployments --namespace=monitoring`
 
-        action: replace
-        target_label: __address__
-        regex: (.*)
-        replacement: $1
-      - source_labels: [__meta_kubernetes_pod_name]
-        target_label: pod
+ ##  Step 6: Connecting To Prometheus Dashboard using Kubectl port forwarding
+ 
+With `kubectl port forwarding`, you can access a pod from your local workstation using a specified port on your localhost. 
 
-3. A questo punto ho avviato il service:
-`kubectl apply -f iris-k8s-prova.yml`
+First, get the Prometheus pod name with the following command:
 
-4. Solo dopo ho creato un file "clusterRole.yml" seguendo il solito sito "https://devopscube.com/setup-prometheus-monitoring-on-kubernetes/" che appare così:
+```sh
+kubectl get pods --namespace=monitoring
+```
 
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: prometheus
-rules:
-- apiGroups: [""]
-  resources:
-  - nodes
-  - nodes/proxy
-  - services
-  - endpoints
-  - pods
-  verbs: ["get", "list", "watch"]
-- apiGroups:
-  - extensions
-  resources:
-  - ingresses
-  verbs: ["get", "list", "watch"]
-- nonResourceURLs: ["/metrics"]
-  verbs: ["get"]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: prometheus
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: prometheus
-subjects:
-- kind: ServiceAccount
-  name: default
-  namespace: monitoring
+Execute the following command with your pod name to access Prometheus from localhost port 8080.
 
-- E poi ho creato il ruolo con `kubectl create -f clusterRole.yml`
+```sh
+kubectl port-forward <prometheus-pod-name> 8080:9090 -n monitoring
+```
+Now, if you access `http://localhost:8080` on your browser, you will get the Prometheus home page.
+
+Once inside Prometheus Dashboard, by navigating to Status --> Targets, you can see all the Kubernetes endpoints automatically connected to Prometheus through service discovery, as shown below.  [INSERIRE FOTO]
