@@ -1,9 +1,0 @@
-version: 1.0
-provider:
-  name: openfaas
-  gateway: http://127.0.0.1:8080
-functions:
-  iris-prova:
-    lang: iris-template
-    handler: ./iris-prova
-    image: nicolacucina/iris-prova:latest

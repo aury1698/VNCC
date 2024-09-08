@@ -1,4 +1,3 @@
-# the server must listen for POST requests to store a model and GET requests to return a model
 import os
 import sys
 import pickle
@@ -8,19 +7,23 @@ from flask import Flask, request, jsonify
 app = Flask(__name__)
 
 with open('model.pkl' , 'rb') as f:
-    model = pickle.load(f)
+    default = pickle.load(f)
 
 user_list = [
     {
         'username': 'nicolacucina',
         'password': 'password'
+    },
+    {
+        'username': 'auroratraversini',
+        'password': 'wordpass'
     }
 ]
 
 @app.route('/default', methods=['GET'])
 def get_default():
     try:
-        return pickle.dumps(model)
+        return pickle.dumps(default)
     except Exception as e:
         return str(e)
 
