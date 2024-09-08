@@ -4,7 +4,7 @@
 
 Before setting up Prometheus for monitoring, it’s important to mention that Kubernetes comes with a default dashboard that can be used to monitor cluster performance, such as CPU and memory usage. However, in our case, the default Kubernetes dashboard didn’t display the required metrics properly, making it difficult to monitor our application.
 
-![Kubernetes Dashboard](images\kubDashboard.jpg)
+![Kubernetes Dashboard](images/kubDashboard.jpg)
 
 ## Prometheus
 To address this issue, we decided to use Prometheus, as it's also integrated with OpenFaaS (with which we will be comparing resource usage between a monolithic Python application deployed on Kubernetes and the same application split into serverless functions). 
@@ -99,15 +99,15 @@ Once you have deployed the service, since this is a NodePort Service to connect 
 
  Prometheus Dashboard, by navigating to Status --> Targets, you can see all the Kubernetes endpoints automatically connected to Prometheus through service discovery, as shown below.  
  
- ![Prometheus Dashboard](images\promDashboard.jpg)
+ ![Prometheus Dashboard](images/promDashboard.jpg)
 
 
 Although Prometheus is now set up, we realized that understanding the default metrics from Prometheus can be challenging without an in-depth knowledge.
 
- ![Prometheus Dashboard](images\promGraph.jpg)
+ ![Prometheus Dashboard](images/promGraph.jpg)
 
 Additionally, writing custom queries in PromQL (Prometheus Query Language) can be time-consuming for beginners.
- ![Prometheus Dashboard](images\promQuery.jpg)
+ ![Prometheus Dashboard](images/promQuery.jpg)
 
 For these reasons, we chose to use Grafana,  a visualization tool that integrates seamlessly with Prometheus and provides a user-friendly interface with visual dashboards. Grafana simplifies the process of visualizing metrics with pre-built graphs and dashboards, without needing to write PromQL queries manually.
 
