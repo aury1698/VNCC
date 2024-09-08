@@ -4,6 +4,8 @@
 
 Before setting up Prometheus for monitoring, it’s important to mention that Kubernetes comes with a default dashboard that can be used to monitor cluster performance, such as CPU and memory usage. However, in our case, the default Kubernetes dashboard didn’t display the required metrics properly, making it difficult to monitor our application.
 
+![Kubernetes Dashboard](images\kubDashboard.jpg)
+
 ## Prometheus
 To address this issue, we decided to use Prometheus, as it's also integrated with OpenFaaS (with which we will be comparing resource usage between a monolithic Python application deployed on Kubernetes and the same application split into serverless functions). 
 Prometheus offers a more flexible and robust way to collect and query metrics.
@@ -97,12 +99,15 @@ Once you have deployed the service, since this is a NodePort Service to connect 
 
  Prometheus Dashboard, by navigating to Status --> Targets, you can see all the Kubernetes endpoints automatically connected to Prometheus through service discovery, as shown below.  
  
- 
-[!!!!! INSERIRE FOTO !!!!!]
+ ![Prometheus Dashboard](images\promDashboard.jpg)
 
 
 Although Prometheus is now set up, we realized that understanding the default metrics from Prometheus can be challenging without an in-depth knowledge.
+
+ ![Prometheus Dashboard](images\promGraph.jpg)
+
 Additionally, writing custom queries in PromQL (Prometheus Query Language) can be time-consuming for beginners.
+ ![Prometheus Dashboard](images\promQuery.jpg)
 
 For these reasons, we chose to use Grafana,  a visualization tool that integrates seamlessly with Prometheus and provides a user-friendly interface with visual dashboards. Grafana simplifies the process of visualizing metrics with pre-built graphs and dashboards, without needing to write PromQL queries manually.
 
@@ -140,6 +145,47 @@ Once the data source is configured, you can either create custom dashboards or i
 2. Use the following ID to import a Kubernetes-specific dashboard from the Grafana community: **[315](https://grafana.com/grafana/dashboards/315)** (Kubernetes cluster monitoring dashboard).
 3. Link the dashboard to the Prometheus data source you just created.
 4. Once imported, you’ll be able to visualize all your Kubernetes metrics through this dashboard.
+
+### Step 8: Comparing the metrics
+In these visuals, we track the CPU and RAM usage during the execution of the application in two distinct environments:
+
+- The first visualization captures the metrics during the execution of the **monolithic application** deployed on **Kubernetes**:
+
+  ![Kubernetes Metrics](images/kubernetes_metrics.gif)
+
+- This second visualization highlights the same metrics collected while running the same application, split into **functions** and executed in a **serverless environment using OpenFaaS**:
+
+  ![Openfaas Metrics](images/openfaas_metrics.gif)
+
+
+The metrics below provide a clearer breakdown of resource utilisation during the application execution in both scenarios, already shown in the previous views.
+
+1) **Kubernetes**:
+
+- **Memory**:
+  - Start = 26%; Used: 7.95 GiB / 31.11 GiB
+  - Max = 26%; Used: 8.19 GiB / 31.11 GiB
+- **CPU**:
+  - Start = 13.38% (1m avg); Used: 1.07 cores / 8.00 cores
+  - Max = 26.21%; Used: 2.10 cores / 8.00 cores
+- **Execution Time**: ~00:17:10
+
+
+2) **OpenFaaS**:
+
+- **Memory**:
+  - Start = 26%; Used: 8.11 GiB / 31.11 GiB
+  - Max = 26%; Used: 8.05 GiB / 31.11 GiB
+- **CPU**:
+  - Start = 11.37% (1m avg); Used: 0.91 cores / 8.00 cores
+  - Max = 21.59% (1m avg); Used: 1.73 cores / 8.00 cores
+- **Execution Time**: ~00:11:94
+
+
+Note that the execution time is calculated approximately from the start of the command execution until the prediction output is displayed in the terminal. "Start" refers to the initial CPU and memory values before the command execution, while "Max" indicates the peak usage.
+
+OpenFaaS demonstrates better efficiency in terms of CPU utilization and execution time, as expected for a serverless environment. Interestingly, memory usage shows little variation between the two setups, highlighting that OpenFaaS does not offer significant memory optimizations in this case.
+
 
 
 
