@@ -1,4 +1,9 @@
-# Setting up Prometheus on a Kubernetes cluster for monitoring the Kubernetes cluster.
+# Setting up Prometheus on a Kubernetes cluster for monitoring
+
+Before setting up Prometheus for monitoring, it’s important to mention that Kubernetes comes with a default dashboard that can be used to monitor cluster performance, such as CPU and memory usage. However, in our case, the default Kubernetes dashboard didn’t display the required metrics properly, making it difficult to monitor our application.
+
+To address this issue, we decided to use Prometheus, as it's also integrated with OpenFaaS (with which we will be comparing resource usage between a monolithic Python application deployed on Kubernetes and the same application split into serverless functions). 
+Prometheus offers a more flexible and robust way to collect and query metrics.
 
 ## Step 0: Getting the Prometheus Kubernetes Manifest Files
 All the configuration files that needed are hosted on Github. You can clone the repo using the following command.
@@ -107,7 +112,7 @@ Finally, apply your updated configuration:
 
 ## Step 5: Create a Prometheus Deployment
 
-Create a file named `prometheus-deployment.yaml`: you can see its structure in `prometheus\prometheus-deployment.` of this project.
+Create a file named `prometheus-deployment.yaml`: you can see its structure in `prometheus\prometheus-deployment.yaml` of this project.
 
 This configuration mounts the Prometheus ConfigMap as files inside /etc/prometheus, as explained in the previous section. It is important to note that this deployment does not use persistent storage volumes for Prometheus storage, as this is a basic setup.
 
@@ -134,3 +139,20 @@ kubectl port-forward <prometheus-pod-name> 8080:9090 -n monitoring
 Now, if you access `http://localhost:8080` on your browser, you will get the Prometheus home page.
 
 Once inside Prometheus Dashboard, by navigating to Status --> Targets, you can see all the Kubernetes endpoints automatically connected to Prometheus through service discovery, as shown below.  [INSERIRE FOTO]
+
+##  Step 7: Understanding and visualizing the metrics with Grafana
+Although Prometheus is now set up, we realized that understanding the default metrics from Prometheus can be challenging without an in-depth knowledge of its query language. Additionally, writing custom queries in PromQL (Prometheus Query Language) can be time-consuming for beginners.
+
+For these reasons, we chose to use Grafana,  a visualization tool that integrates seamlessly with Prometheus and provides a user-friendly interface with visual dashboards. Grafana simplifies the process of visualizing metrics with pre-built graphs and dashboards, without needing to write PromQL queries manually.
+
+1. Install Grafana in the `monitoring` namespace (the same namespace where Prometheus was installed):
+
+```sh 
+helm install grafana grafana/grafana --namespace monitoring`
+```
+
+2. Access the Grafana dashboard by port-forwarding the Grafana service and logging in with the default credentials(user: `admin`, password shown after installation)
+```sh
+kubectl port-forward -n monitoring svc/grafana 3000:80
+```
+You can then access Grafana at `http://localhost:3000` and log in with the provided credentials.
