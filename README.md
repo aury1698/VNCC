@@ -107,7 +107,6 @@ However, while Prometheus provides a wide range of interesting metrics, our comp
 
 ![OpenFaaS Metrics](images/metrics_openfaas.png)
 
-As a result, including those metrics for the Kubernetes monolithic version in this comparison was not feasible.
 
 
 #### Step 0: Getting the Prometheus Kubernetes Manifest Files
