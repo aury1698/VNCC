@@ -1,10 +1,5 @@
 # Confronting monolitic and serverless approches to software development 
 
-This repository contains code that will be used to confront the "classic" or _monolitic_ approch to software development against the more recent _serveless_ way using Prometheus metrics.
-
-![Project Diagram](images/Project_Diagram.png)
-
-
 ## Table of Contents
 
 - [Implementation](#implementation)
@@ -23,6 +18,11 @@ This repository contains code that will be used to confront the "classic" or _mo
     - [Step 6: Connecting To Prometheus Dashboard](#step-6-connecting-to-prometheus-dashboard)
     - [Step 7: Grafana](#step-7-grafana)
     - [Step 8: Comparing the metrics](#step-8-comparing-the-metrics)
+
+This repository contains code that will be used to confront the "classic" or _monolitic_ approch to software development against the more recent _serveless_ way using Prometheus metrics.
+
+![Project Diagram](images/Project_Diagram.png)
+
 
 ## Implementation
 
