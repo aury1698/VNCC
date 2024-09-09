@@ -107,6 +107,7 @@ However, while Prometheus provides a wide range of interesting metrics, our comp
 
 ![OpenFaaS Metrics](images/metrics_openfaas.png)
 
+To address this limitation, the following approach aims to provide a workaround to allow a meaningful comparison of resource usage.
 
 
 #### Step 0: Getting the Prometheus Kubernetes Manifest Files
