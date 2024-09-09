@@ -1,13 +1,15 @@
+# Confronting monolitic and serverless approches to software development 
+
 This repository contains code that will be used to confront the "classic" or _monolitic_ approch to software development against the more recent _serveless_ way using Prometheus metrics.
 
 ![Project Diagram](images/Project_Diagram.png)
 
-# Implementation
+## Implementation
 The code shows a simple example of machine learning training and predictions services, using authentication and adding some fake load to pan out the execution time.
 
 The monolitic code will be executed inside a _Kubernetes_ pod while the serverless version will be served using _OpenFaas_ .
 
-## Iris-server
+### Iris-server
 
 Both the monolitic and the Openfaas codes need to contact a web server for a simple form of authentication  and for the storage/retrieval of the trained models.
 
@@ -23,7 +25,7 @@ The _iris-k8s-server.yml_ is used to deploy the server inside Kubernetes and it 
 
 Which will always download the latest image from Docker Hub.
 
-## OpenFaas implementation
+### OpenFaas implementation
 
 Since OpenFaas has some default templates we can choose from, we started from the _python3_ template https://github.com/openfaas/templates/tree/master/template/python3 , which was then customized to our needs. Taking the _training function_ as an example, we have
 
@@ -60,32 +62,32 @@ To enable communication between the functions and the iris-server:
 - the _kubernetes_ python library is imported so that the script can interact with the cluster DNS to find the service ip
 - the _openfaas_ namespace needs the correct authorization inside the cloud, which is stated inside the _openfaas-roles.yml_ file
 
-#### Monolitic implementation
+### Monolitic implementation
 
 The monolitic approach encloses all the code contained inside the Openfaas functions in a single __handle()__ function. This is done to take advantage of the streamlined approach offered by the faas-cli.
 The Dockerfile therefore is mostly similar to all the other ones made for the Openfaas functions, this way we can make use of the watchdog to handle the incoming requests and the metrics exposed on the 8081 port so that we can make a proper assestment of the differences between the two approches.
 
 Even though the pod running the monolitic code is in the _default_ namespace, it still needs the correct authorization to access the _iris\_server\_service_ , deployed by using the _monolitic\_roles.yml_ file
 
-# Monitoring
+## Monitoring
 
-## Kubernetes Dashboard
+### Kubernetes Dashboard
 
 Before setting up Prometheus for monitoring, it’s important to mention that Kubernetes comes with a default dashboard that can be used to monitor cluster performance, such as CPU and memory usage. However, in our case, the default Kubernetes dashboard didn’t display the required metrics properly, making it difficult to monitor our application.
 
 ![Kubernetes Dashboard](images/kubDashboard.jpg)
 
-## Prometheus
+### Prometheus
 To address this issue, we decided to use Prometheus, as it's also integrated with OpenFaaS (with which we will be comparing resource usage between a monolithic Python application deployed on Kubernetes and the same application split into serverless functions). 
 Prometheus offers a more flexible and robust way to collect and query metrics.
 
-### Step 0: Getting the Prometheus Kubernetes Manifest Files
+#### Step 0: Getting the Prometheus Kubernetes Manifest Files
 All the configuration files that are needed are hosted on Github. 
 ```sh
 git clone https://github.com/techiescamp/kubernetes-prometheus
 ```
 
-### Step 1: Create a Namespace
+#### Step 1: Create a Namespace
 Create a dedicated Kubernetes namespace for all monitoring components. This is done so that all the Prometheus Kubernetes deployment objects will be installed in the same specific namespace.
 
 Run the following command to create a new namespace called `monitoring`.
@@ -93,7 +95,7 @@ Run the following command to create a new namespace called `monitoring`.
 kubectl create namespace monitoring
 ```
 
-### Step 2: Create a ClusterRole for RBAC policy
+#### Step 2: Create a ClusterRole for RBAC policy
 Prometheus uses Kubernetes APIs to read all the available metrics from nodes, pods, deployments... . For this reason, you need to create an RBAC policy with read access to the required API groups and bind the policy to the monitoring namespace.
 
 Then create the role using the following command:
@@ -102,7 +104,7 @@ Then create the role using the following command:
 kubectl create -f prometheus\clusterRole.yaml
 ```
 
-### Step 3: Create a Config Map To Externalize Prometheus Configurations
+#### Step 3: Create a Config Map To Externalize Prometheus Configurations
 
 To facilitate easier management of Prometheus configurations and alert rules, you can use a Kubernetes ConfigMap. This approach allows you to update configurations without needing to rebuild the Prometheus image. 
 
@@ -116,7 +118,7 @@ kubectl create -f prometheus\config-map.yaml
 
 This command generates the configuration and alert rules needed for Prometheus to scrape metrics from your pods. The key scrape job, `kubernetes-pods`, allows Prometheus to discover metrics from pods annotated with `prometheus.io/scrape` and `prometheus.io/port`.
 
-### Step 4: Annotate Your Services and Deployment for Prometheus Scraping
+#### Step 4: Annotate Your Services and Deployment for Prometheus Scraping
 Since Prometheus expects to scrape metrics from specific sources, you need to add annotations to your deployment definitions so that Prometheus knows where to look for metrics within your pods.
 
 The annotations need to be included in a specfic position in the yml, under the pod template in your deployment configuration: 
@@ -140,12 +142,12 @@ The annotations need to be included in a specfic position in the yml, under the 
 ``` 
 
 
-### Step 5: Create a Prometheus Deployment
+#### Step 5: Create a Prometheus Deployment
 
 The `prometheus\prometheus-deployment.yaml` mounts the Prometheus ConfigMap as files inside `/etc/prometheus`, as explained in the previous section. It is important to note that this deployment does not use persistent storage volumes for Prometheus storage, as this is a basic setup, while for production uses you should make sure to add persistent storage to the deployment.
 
 
-###  Step 6: Connecting To Prometheus Dashboard 
+####  Step 6: Connecting To Prometheus Dashboard 
  
 With `kubectl port forwarding`, you can access a pod from your local workstation using a specified port on your localhost. 
 
@@ -181,7 +183,7 @@ Additionally, writing custom queries in PromQL (Prometheus Query Language) can b
 For these reasons, we chose to use Grafana,  a visualization tool that integrates seamlessly with Prometheus and provides a user-friendly interface with visual dashboards. Grafana simplifies the process of visualizing metrics with pre-built graphs and dashboards, without needing to write PromQL queries manually.
 
 
-###  Step 7: Grafana
+####  Step 7: Grafana
 
 Install Grafana in the `monitoring` namespace (the same namespace where Prometheus was installed):
 
@@ -215,7 +217,7 @@ Once the data source is configured, you can either create custom dashboards or i
 3. Link the dashboard to the Prometheus data source you just created.
 4. Once imported, you’ll be able to visualize all your Kubernetes metrics through this dashboard.
 
-### Step 8: Comparing the metrics
+#### Step 8: Comparing the metrics
 In these visuals, we track the CPU and RAM usage during the execution of the application in two distinct environments:
 
 - The first visualization captures the metrics during the execution of the **monolithic application** deployed on **Kubernetes**:
