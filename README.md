@@ -253,6 +253,9 @@ The metrics below provide a clearer breakdown of resource utilisation during the
   - Max = 21.59% (1m avg); Used: 1.73 cores / 8.00 cores
 - **Execution Time**: ~00:11:94
 
+![Resource Usage](images/Usage.png)
+
+
 Note that the execution time is calculated approximately from the start of the command execution until the prediction output is displayed in the terminal. "Baseline" refers to the initial CPU and memory values before the command execution, while "Max" indicates the peak usage.
 
 OpenFaaS demonstrates better efficiency in terms of CPU utilization and execution time, as expected for a serverless environment. Interestingly, memory usage shows little variation between the two setups, highlighting that OpenFaaS does not offer significant memory optimizations in this case.
