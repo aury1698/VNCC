@@ -4,6 +4,26 @@ This repository contains code that will be used to confront the "classic" or _mo
 
 ![Project Diagram](images/Project_Diagram.png)
 
+
+## Table of Contents
+
+- [Implementation](#implementation)
+  - [Iris-server](#iris-server)
+  - [OpenFaaS implementation](#openfaas-implementation)
+  - [Monolithic implementation](#monolithic-implementation)
+- [Monitoring](#monitoring)
+  - [Kubernetes Dashboard](#kubernetes-dashboard)
+  - [Prometheus](#prometheus)
+    - [Step 0: Getting the Prometheus Kubernetes Manifest Files](#step-0-getting-the-prometheus-kubernetes-manifest-files)
+    - [Step 1: Create a Namespace](#step-1-create-a-namespace)
+    - [Step 2: Create a ClusterRole for RBAC policy](#step-2-create-a-clusterrole-for-rbac-policy)
+    - [Step 3: Create a Config Map To Externalize Prometheus Configurations](#step-3-create-a-config-map-to-externalize-prometheus-configurations)
+    - [Step 4: Annotate Your Services and Deployment for Prometheus Scraping](#step-4-annotate-your-services-and-deployment-for-prometheus-scraping)
+    - [Step 5: Create a Prometheus Deployment](#step-5-create-a-prometheus-deployment)
+    - [Step 6: Connecting To Prometheus Dashboard](#step-6-connecting-to-prometheus-dashboard)
+    - [Step 7: Grafana](#step-7-grafana)
+    - [Step 8: Comparing the metrics](#step-8-comparing-the-metrics)
+
 ## Implementation
 
 The code is a simple python example of machine learning training and predictions services, using authentication and adding some fake load to pan out the execution time.
@@ -82,6 +102,13 @@ Kubernetes comes with a default dashboard that can be used to monitor cluster pe
 
 To address this issue, we decided to use Prometheus to monitor the Kubernetes pod running the monolitic code, as this tool is also integrated with OpenFaaS and we will be comparing resource usage between the two approches. 
 Prometheus offers a more flexible and robust way to collect and query metrics.
+
+However, while Prometheus provides a wide range of interesting metrics, our comparison was limited by the fact that the Community version of OpenFaaS offers a restricted set of metrics. For example, CPU and RAM usage metrics are only available in the Pro version of OpenFaaS, as you can see from the official documentation [ [Metrics OpenFaaS](https://docs.openfaas.com/architecture/metrics/#:~:text=All%20OpenFaaS%20metrics%20are%20exposed%20in%20Prometheus%20format%2C,scale%20to%20zero%2C%20and%20the%20horizontal%20Pod%20autoscaler.) ] or in the snippet below. 
+
+![OpenFaaS Metrics](images/metrics_openfaas.png)
+
+As a result, including those metrics for the Kubernetes monolithic version in this comparison was not feasible.
+
 
 #### Step 0: Getting the Prometheus Kubernetes Manifest Files
 
