@@ -83,6 +83,13 @@ Kubernetes comes with a default dashboard that can be used to monitor cluster pe
 To address this issue, we decided to use Prometheus to monitor the Kubernetes pod running the monolitic code, as this tool is also integrated with OpenFaaS and we will be comparing resource usage between the two approches. 
 Prometheus offers a more flexible and robust way to collect and query metrics.
 
+However, while Prometheus provides a wide range of interesting metrics, our comparison was limited by the fact that the Community version of OpenFaaS offers a restricted set of metrics. For example, CPU and RAM usage metrics are only available in the Pro version of OpenFaaS, as you can see from the official documentation [ [Metrics OpenFaaS](https://docs.openfaas.com/architecture/metrics/#:~:text=All%20OpenFaaS%20metrics%20are%20exposed%20in%20Prometheus%20format%2C,scale%20to%20zero%2C%20and%20the%20horizontal%20Pod%20autoscaler.) ] or in the snippet below. 
+
+![OpenFaaS Metrics](images/metrics_openfaas.png)
+
+As a result, including those metrics for the Kubernetes monolithic version in this comparison was not feasible.
+
+
 #### Step 0: Getting the Prometheus Kubernetes Manifest Files
 
 All the configuration files that are needed are hosted on Github. 
